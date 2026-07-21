@@ -1,0 +1,25 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Test and coverage artefacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+venv/
+.venv/
+env/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Experimental data must never be committed
+*.mat
+*.npy
