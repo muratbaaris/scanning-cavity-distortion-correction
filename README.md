@@ -1,8 +1,8 @@
 # Scanning Cavity Microscope Distortion Correction
 
-A Python library and command-line tool that measures and corrects the
-geometric distortion of a raster-scanning microscope from an image of a
-periodic checkerboard calibration target.
+A Python library, command-line tool, and graphical interface that measures
+and corrects the geometric distortion of a raster-scanning microscope from
+an image of a periodic checkerboard calibration target.
 
 ## The problem
 
@@ -10,8 +10,8 @@ A raster-scanning microscope moves the sample under a fixed optical mode
 using piezo actuators. Two things spoil the geometry of the recorded image:
 the two scan axes are not perfectly orthogonal, and the piezo response is
 not perfectly linear. As a result, distances and angles in the image do not
-faithfully represent the physical sample. For quantitative measurements such as
-extracting a diffusion coefficient from a spreading spot, for instance
+faithfully represent the physical sample. For quantitative measurements —
+extracting a diffusion coefficient from a spreading spot, for instance —
 this distortion biases the result.
 
 This package corrects the distortion by imaging a checkerboard mirror with
@@ -26,9 +26,16 @@ subsequent image acquired with the same scan settings.
 Requires Python 3.9 or later.
 
 ```bash
-git clone https://github.com/muratbaaris/scanning-cavity-distortion-correction
+git clone https://github.com/muratbaaris/scanning-cavity-distortion-correction.git
 cd scanning-cavity-distortion-correction
 pip install -r requirements.txt
+```
+
+The GUI additionally requires Tkinter, which is included with most Python
+distributions. On Linux you may need to install it separately:
+
+```bash
+sudo apt install python3-tk    # Ubuntu / Debian
 ```
 
 To run the test suite:
@@ -51,6 +58,23 @@ scaling, fits a calibration, applies it, and reports the lattice angle and
 basis length ratio before and after the correction. The corrected image and
 the fitted calibration are written to `results/`.
 
+Expected output:
+
+```
+Synthetic demonstration
+====================================================
+  applied shear       : 0.25
+  applied y scaling   : 1.15
+
+  quantity                    before       after     ideal
+  ------------------------------------------------------
+  lattice angle [deg]          96.46       90.06     90.00
+  basis length ratio          0.7822      0.9996    1.0000
+
+  fit residual        : 0.128 px mean, 0.267 px max
+  squares used        : 151 of 151
+```
+
 ## Command-line interface
 
 Three subcommands cover the whole workflow.
@@ -69,6 +93,22 @@ python -m scdc demo --output-dir results
 
 Use `python -m scdc --help` and `python -m scdc <command> --help` for the
 full list of options.
+
+## Graphical interface
+
+For interactive use, a Tkinter GUI allows the user to load a calibration
+image (or generate a synthetic one), select a region of interest by
+dragging, fit the calibration, inspect the polynomial coefficients, and
+export the corrected image — all without writing any code.
+
+```bash
+python -m scdc.gui
+```
+
+The GUI delegates all computation to the `scdc` library and contains no
+algorithm code itself. If you don't have a checkerboard image handy, click
+the "Generate synthetic…" button to build a distorted target you can
+practice on.
 
 ## Using the library
 
@@ -106,11 +146,11 @@ scdc/                the library
 ├── io.py            reading and writing calibrations and images
 ├── plotting.py      visualisation helpers
 ├── cli.py           command line entry point
+├── gui.py           Tkinter graphical interface
 └── __main__.py      allows "python -m scdc"
 
 tests/               pytest test suite, one file per library module
 docs/                explanatory documentation
-examples/            worked example notebook
 ```
 
 ## Documentation
@@ -119,8 +159,6 @@ examples/            worked example notebook
   the seven stages of the pipeline, with the reasoning behind each of them.
 - Every public function carries a numpy-style docstring; use `help(function)`
   or the built-in Python help browser.
-- [`examples/demo.ipynb`](examples/demo.ipynb) — a runnable notebook that
-  walks through a calibration on a synthetic target.
 
 ## Testing
 
@@ -135,8 +173,8 @@ python -m pytest tests/ -v             # verbose
 python -m pytest tests/test_lattice.py # a single module
 ```
 
-There are more than sixty tests distributed across the modules, one file per
-library module.
+There are 74 tests distributed across five test files, one per library
+module.
 
 ## License
 
