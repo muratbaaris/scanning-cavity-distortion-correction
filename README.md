@@ -10,8 +10,8 @@ A raster-scanning microscope moves the sample under a fixed optical mode
 using piezo actuators. Two things spoil the geometry of the recorded image:
 the two scan axes are not perfectly orthogonal, and the piezo response is
 not perfectly linear. As a result, distances and angles in the image do not
-faithfully represent the physical sample. For quantitative measurements —
-extracting a diffusion coefficient from a spreading spot, for instance —
+faithfully represent the physical sample. For quantitative measurements such as
+extracting a diffusion coefficient from a spreading spot, for instance
 this distortion biases the result.
 
 This package corrects the distortion by imaging a checkerboard mirror with
