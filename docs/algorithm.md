@@ -15,7 +15,7 @@ The pipeline has seven stages:
 6. **Warp image** - sample the input at polynomial-mapped positions
 7. **Crop** - remove the empty corners of the warped output
 
-## Stage 1 — Centroid Detection
+## Stage 1: Centroid Detection
 
 **Module:** `scdc.centroids`
 
@@ -38,7 +38,7 @@ is missing part of its area. The centre of mass of the visible part is
 displaced towards the image interior by an amount unrelated to the distortion.
 Including it would corrupt the polynomial fit.
 
-## Stage 2 — Basis Estimation
+## Stage 2: Basis Estimation
 
 **Module:** `scdc.lattice.estimate_basis`
 
@@ -61,7 +61,7 @@ pulls in vectors from the next shell.
 equal length and meet at exactly 90°. Their deviation from that, the angle
 and the length ratio, directly quantifies the distortion.
 
-## Stage 3 — Lattice Index Assignment (Region Growing)
+## Stage 3: Lattice Index Assignment (Region Growing)
 
 **Module:** `scdc.lattice.assign_lattice_indices`
 
@@ -86,7 +86,7 @@ accumulate, and every square receives a unique label.
 
 **Output:** an integer (i, j) for each centroid.
 
-## Stage 4 — Building the Ideal Target Grid
+## Stage 4: Building the Ideal Target Grid
 
 **Module:** `scdc.calibration.build_ideal_targets`
 
@@ -109,7 +109,7 @@ same magnification as the input.
 
 **Output:** an ideal (x, y) for each labelled square.
 
-## Stage 5 — Polynomial Fit
+## Stage 5: Polynomial Fit
 
 **Module:** `scdc.polynomial`
 
@@ -137,7 +137,7 @@ the "sweet spot".
 **Output:** 20 coefficients (10 per coordinate) that completely describe the
 scanner's distortion.
 
-## Stage 6 — Image Warping
+## Stage 6: Image Warping
 
 **Module:** `scdc.calibration.apply_calibration`
 
@@ -154,7 +154,7 @@ the same scan settings can be corrected by the same polynomial.
 **Output:** the corrected image, with NaN in the corners where the distorted
 input did not reach.
 
-## Stage 7 — Cropping
+## Stage 7: Cropping
 
 **Module:** `scdc.geometry.largest_inscribed_rectangle`
 
