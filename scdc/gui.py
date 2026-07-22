@@ -216,7 +216,7 @@ class CorrectionApp:
     def generate_synthetic(self):
         """Open a dialog to generate a synthetic distorted checkerboard.
 
-        The generated image behaves exactly like a loaded .mat file — it
+        The generated image behaves exactly like a loaded .mat file, it
         appears in the left panel and can be used with the full workflow
         (Fit, Apply, Save, etc.).  Useful for testing the pipeline without
         having a real calibration image.
