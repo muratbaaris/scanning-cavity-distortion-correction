@@ -163,3 +163,71 @@ def test_calibration_round_trip_from_a_real_fit(tmp_path):
                        atol=COEFFICIENT_TOLERANCE)
     assert loaded.input_shape == original.input_shape
     assert loaded.output_shape == original.output_shape
+
+# ---------- calibration I/O errors ----------
+
+
+def test_save_calibration_rejects_a_missing_directory(tmp_path):
+    """Writing to a directory that does not exist must fail explicitly.
+
+    Otherwise the underlying MATLAB writer raises an opaque OSError that
+    does not tell the user which path was tried.
+    """
+    path = str(tmp_path / "nowhere" / "cal.mat")
+    with pytest.raises(CalibrationFileError, match="does not exist"):
+        save_calibration(_make_calibration(), path)
+
+
+def test_load_calibration_rejects_a_missing_file(tmp_path):
+    """A missing file must fail with a dedicated error, not a generic one.
+
+    Users automating batch runs need to distinguish "file not there" from
+    "file corrupt" to decide whether to retry or to abort.
+    """
+    with pytest.raises(CalibrationFileError, match="no calibration file"):
+        load_calibration(str(tmp_path / "does_not_exist.mat"))
+
+
+def test_load_calibration_rejects_an_unreadable_file(tmp_path):
+    """A file that is not a valid .mat must be reported as unreadable.
+
+    Wrapping the low-level scipy error gives the user a message that names
+    the offending path, which the raw exception does not.
+    """
+    bad = tmp_path / "not_a_mat.mat"
+    bad.write_bytes(b"this is not a MATLAB file")
+    with pytest.raises(CalibrationFileError, match="could not be read"):
+        load_calibration(str(bad))
+
+
+def test_load_calibration_rejects_a_file_missing_required_fields(tmp_path):
+    """Absent required fields must be reported by name so the user can fix them.
+
+    A silent default would produce a "successful" load of a nonsense
+    calibration and corrupt every image it was applied to.
+    """
+    path = str(tmp_path / "incomplete.mat")
+    sio.savemat(path, {"degree": 2, "coefficients_x": np.zeros(6)})
+    with pytest.raises(CalibrationFileError, match="missing the required field"):
+        load_calibration(path)
+
+
+def test_load_calibration_rejects_a_coefficient_count_inconsistent_with_degree(tmp_path):
+    """A degree/coefficient mismatch must be caught before the model is used.
+
+    Evaluating a polynomial with the wrong number of coefficients does not
+    raise on its own, it just returns garbage; catching it at load time is
+    the only place the file itself gives the game away.
+    """
+    path = str(tmp_path / "wrong_count.mat")
+    sio.savemat(path, {
+        "degree": 3,
+        "coefficients_x": np.zeros(5),
+        "coefficients_y": np.zeros(5),
+        "lattice_spacing_px": 10.0,
+        "input_shape": np.array([100, 100], dtype=np.int64),
+        "output_shape": np.array([90, 90], dtype=np.int64),
+        "crop_offset": np.array([5, 5], dtype=np.int64),
+    })
+    with pytest.raises(CalibrationFileError, match="degree 3"):
+        load_calibration(path)
