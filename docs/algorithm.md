@@ -7,13 +7,13 @@ and the assumptions it makes.
 
 The pipeline has seven stages:
 
-1. **Detect centroids** — locate every bright square in the calibration image
-2. **Estimate basis** — measure the two lattice step vectors
-3. **Assign lattice indices** — label each square with integer grid coordinates
-4. **Build ideal targets** — compute where each square should be on a perfect grid
-5. **Fit polynomial** — learn the mapping from ideal to measured positions
-6. **Warp image** — sample the input at polynomial-mapped positions
-7. **Crop** — remove the empty corners of the warped output
+1. **Detect centroids** - locate every bright square in the calibration image
+2. **Estimate basis** - measure the two lattice step vectors
+3. **Assign lattice indices** - label each square with integer grid coordinates
+4. **Build ideal targets** - compute where each square should be on a perfect grid
+5. **Fit polynomial** - learn the mapping from ideal to measured positions
+6. **Warp image** - sample the input at polynomial-mapped positions
+7. **Crop** - remove the empty corners of the warped output
 
 ## Stage 1 — Centroid Detection
 
@@ -58,8 +58,8 @@ pulls in vectors from the next shell.
 **Output:** two vectors a₁, a₂ in pixel coordinates.
 
 **Why this matters for distortion:** in a perfect image a₁ and a₂ would have
-equal length and meet at exactly 90°. Their deviation from that — the angle
-and the length ratio — directly quantifies the distortion.
+equal length and meet at exactly 90°. Their deviation from that, the angle
+and the length ratio, directly quantifies the distortion.
 
 ## Stage 3 — Lattice Index Assignment (Region Growing)
 
@@ -80,8 +80,8 @@ data this produced 16 duplicate labels.
 **Region growing fixes this.** Starting from a seed at the centre of the
 point cloud (labelled (0, 0)), the algorithm propagates outward by
 breadth-first search. Each new label is a neighbour's label plus a single
-small integer step. Because every decision spans only one short hop — where
-the lattice is locally uniform — the rounding is always safe. Errors never
+small integer step. Because every decision spans only one short hop, where
+the lattice is locally uniform, the rounding is always safe. Errors never
 accumulate, and every square receives a unique label.
 
 **Output:** an integer (i, j) for each centroid.
@@ -127,12 +127,12 @@ Each square contributes one equation per coordinate. With ~350 squares and
 overdetermined. Least squares finds the coefficients that minimise the total
 squared error.
 
-**Why degree 3?** Degree 1 is an affine transformation — it captures uniform
+**Why degree 3?** Degree 1 is an affine transformation. It captures uniform
 skew and scaling but cannot bend. The real distortion bends (piezo
 nonlinearity), so degree 1 leaves a residual of several pixels. Degree 3
 adds curvature and brings the residual down to the centroid noise floor
 (~0.7 px on real data). Degree 4 does not improve it further, so degree 3 is
-the sweet spot.
+the "sweet spot".
 
 **Output:** 20 coefficients (10 per coordinate) that completely describe the
 scanner's distortion.
