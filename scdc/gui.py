@@ -33,6 +33,9 @@ from matplotlib.widgets import RectangleSelector
 from scdc.calibration import fit_calibration, apply_calibration, CalibrationError
 from scdc.centroids import detect_centroids
 from scdc.io import save_calibration, load_calibration
+from scdc.synthetic import (
+    make_checkerboard, distort_image, shear_matrix,
+)
 
 
 class CorrectionApp:
@@ -69,6 +72,8 @@ class CorrectionApp:
 
         ttk.Button(bar, text="Load image\u2026",
                    command=self.load_mat).pack(side=tk.LEFT, padx=2)
+        ttk.Button(bar, text="Generate synthetic\u2026",
+                   command=self.generate_synthetic).pack(side=tk.LEFT, padx=2)
 
         ttk.Separator(bar, orient="vertical").pack(
             side=tk.LEFT, fill=tk.Y, padx=8)
@@ -205,6 +210,98 @@ class CorrectionApp:
         win.grab_set()
         self.root.wait_window(win)
         return choice[0]
+
+    # ── synthetic target generation ──────────────────────────────
+
+    def generate_synthetic(self):
+        """Open a dialog to generate a synthetic distorted checkerboard.
+
+        The generated image behaves exactly like a loaded .mat file — it
+        appears in the left panel and can be used with the full workflow
+        (Fit, Apply, Save, etc.).  Useful for testing the pipeline without
+        having a real calibration image.
+        """
+        win = tk.Toplevel(self.root)
+        win.title("Generate synthetic checkerboard")
+        win.geometry("380x340")
+
+        ttk.Label(win, padding=10,
+                  text="A synthetic checkerboard will be built, then\n"
+                       "distorted by the shear and scaling below.",
+                  justify="left").grid(row=0, column=0, columnspan=2,
+                                       sticky="w")
+
+        params = [
+            ("Image size (px)",  "size",       220),
+            ("Cell size (px)",   "cell",       12.0),
+            ("Shear",            "shear",      0.25),
+            ("Y-axis scaling",   "scale_y",    1.15),
+            ("X-axis scaling",   "scale_x",    1.0),
+            ("Noise level",      "noise",      0.01),
+            ("Random seed",      "seed",       0),
+        ]
+
+        entries = {}
+        for i, (label, key, default) in enumerate(params):
+            ttk.Label(win, text=label, padding=4).grid(
+                row=i + 1, column=0, sticky="e")
+            var = tk.StringVar(value=str(default))
+            ttk.Entry(win, textvariable=var, width=10).grid(
+                row=i + 1, column=1, sticky="w", padx=4)
+            entries[key] = var
+
+        def ok():
+            try:
+                size = int(entries["size"].get())
+                cell = float(entries["cell"].get())
+                shear = float(entries["shear"].get())
+                scale_x = float(entries["scale_x"].get())
+                scale_y = float(entries["scale_y"].get())
+                noise = float(entries["noise"].get())
+                seed = int(entries["seed"].get())
+            except ValueError as e:
+                messagebox.showerror("Bad input",
+                                     f"Every field must be a number.\n{e}")
+                return
+
+            try:
+                ideal = make_checkerboard(
+                    shape=(size, size), cell_size=cell, blur_sigma=1.0,
+                    noise_level=noise, random_seed=seed)
+                matrix = shear_matrix(
+                    shear=shear, scale_x=scale_x, scale_y=scale_y)
+                distorted = distort_image(ideal, matrix=matrix)
+            except Exception as e:
+                messagebox.showerror("Generation failed", str(e))
+                return
+
+            self.image = distorted.astype(float)
+            self.image_path = None
+            self.corrected = None
+            self.calibration = None
+            self.roi = None
+            self._draw_original()
+            self.ax_corr.clear()
+            self.ax_corr.set_title(
+                "Corrected - click Fit to compute")
+            self.canvas.draw()
+
+            height, width = self.image.shape
+            self._set_status(
+                f"Synthetic target: {width} \u00d7 {height} px, "
+                f"cell {cell} px, shear {shear}, "
+                f"scale_x {scale_x}, scale_y {scale_y}, "
+                f"noise {noise}, seed {seed}")
+            win.destroy()
+
+        btn_frame = ttk.Frame(win)
+        btn_frame.grid(row=len(params) + 1, column=0, columnspan=2, pady=10)
+        ttk.Button(btn_frame, text="Generate",
+                   command=ok).pack(side=tk.LEFT, padx=4)
+        ttk.Button(btn_frame, text="Cancel",
+                   command=win.destroy).pack(side=tk.LEFT, padx=4)
+        win.transient(self.root)
+        win.grab_set()
 
     # ── drawing ──────────────────────────────────────────────────
 
