@@ -10,8 +10,8 @@ A raster-scanning microscope moves the sample under a fixed optical mode
 using piezo actuators. Two things spoil the geometry of the recorded image:
 the two scan axes are not perfectly orthogonal, and the piezo response is
 not perfectly linear. As a result, distances and angles in the image do not
-faithfully represent the physical sample. For quantitative measurements —
-extracting a diffusion coefficient from a spreading spot, for instance —
+faithfully represent the physical sample. For quantitative measurements,
+extracting a diffusion coefficient from a spreading spot, for instance
 this distortion biases the result.
 
 This package corrects the distortion by imaging a checkerboard mirror with
@@ -99,7 +99,7 @@ full list of options.
 For interactive use, a Tkinter GUI allows the user to load a calibration
 image (or generate a synthetic one), select a region of interest by
 dragging, fit the calibration, inspect the polynomial coefficients, and
-export the corrected image — all without writing any code.
+export the corrected image, all without writing any code.
 
 ```bash
 python -m scdc.gui
@@ -155,7 +155,7 @@ docs/                explanatory documentation
 
 ## Documentation
 
-- [`docs/algorithm.md`](docs/algorithm.md) — a step by step explanation of
+- [`docs/algorithm.md`](docs/algorithm.md): a step by step explanation of
   the seven stages of the pipeline, with the reasoning behind each of them.
 - Every public function carries a numpy-style docstring; use `help(function)`
   or the built-in Python help browser.
