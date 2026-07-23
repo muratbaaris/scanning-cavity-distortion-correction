@@ -173,7 +173,7 @@ python -m pytest tests/ -v             # verbose
 python -m pytest tests/test_lattice.py # a single module
 ```
 
-There are 74 tests distributed across five test files, one per library
+There are 98 tests distributed across six test files, one per library
 module.
 
 ## License
