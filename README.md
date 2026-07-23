@@ -1,4 +1,5 @@
 # Scanning Cavity Microscope Distortion Correction
+![tests](https://github.com/muratbaaris/scanning-cavity-distortion-correction/actions/workflows/tests.yml/badge.svg)
 
 A Python library, command-line tool, and graphical interface that measures
 and corrects the geometric distortion of a raster-scanning microscope from
