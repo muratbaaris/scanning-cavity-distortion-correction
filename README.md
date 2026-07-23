@@ -180,3 +180,7 @@ module.
 ## License
 
 GPL v3 - see [LICENSE](LICENSE).
+
+## Generative AI Statement
+
+In accordance with the principles of honesty, transparency, and accountability stated in the University of Bologna policy for an ethical and responsible use of generative artificial intelligence (GenAI), in particular the use of generative artificial intelligence in “Use cases of generative artificial intelligence in preparing student work to be assessed” such as the “generating or explaining a programming code”, the author declares that Claude Opus 4.7 was used to help in drafting the clean algorithm documentation, proofreading README documentation, and refactoring the monolithic analysis script where active supervision and critical thinking were employed to account for the generated results, thus complying with the university policy principles. All generated code and text were reviewed, tested, and revised by the author, and the underlying algorithm design was previously developed for the author's own lab work. The author takes full responsibility for the correctness of the final code.
