@@ -55,7 +55,9 @@ def build_parser():
                             help=f"polynomial degree "
                                  f"(default: {DEFAULT_DEGREE})")
     fit_parser.add_argument("--key", default=None,
-                            help="variable name inside a .mat file")
+                            help="name of the image variable inside a .mat "
+                                 "file (required when it contains several "
+                                 "2-D arrays)")
     fit_parser.add_argument("--threshold-fraction", type=float, default=0.45,
                             help="binarisation threshold, between 0 and 1 "
                                  "(default: 0.45)")
@@ -74,7 +76,9 @@ def build_parser():
                               help="where to write the corrected image "
                                    "(default: corrected.mat)")
     apply_parser.add_argument("--key", default=None,
-                              help="variable name inside a .mat file")
+                              help="name of the image variable inside a .mat "
+                                   "file (required when it contains several "
+                                   "2-D arrays)")
     apply_parser.add_argument("--fill", type=float, default=0.0,
                               help="value written where no data exists "
                                    "(default: 0.0)")
