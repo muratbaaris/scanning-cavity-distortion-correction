@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scdc"
+version = "1.0.0"
+description = "Distortion correction for scanning cavity microscope images"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Murat Baris" }]
+dependencies = [
+    "numpy>=1.22",
+    "scipy>=1.8",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "pytest-cov"]
+
+[project.scripts]
+scdc = "scdc.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["scdc*"]
