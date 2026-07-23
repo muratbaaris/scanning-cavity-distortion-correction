@@ -73,3 +73,18 @@ def test_running_without_a_command_prints_help_and_fails(capsys):
 
     assert exit_code == 1
     assert "usage: scdc" in capsys.readouterr().out
+
+# ---------- fit ----------
+
+def test_fit_writes_a_loadable_calibration(tmp_path, capsys):
+    """The whole purpose of ``fit`` is to produce a calibration file, so the
+    file it announces must exist and be readable by ``load_calibration``."""
+    target = tmp_path / "target.npy"
+    _write_distorted_target(target)
+    output = tmp_path / "calibration.mat"
+
+    exit_code = main(["fit", str(target), "--output", str(output)])
+
+    assert exit_code == 0
+    calibration = load_calibration(str(output))
+    assert calibration.input_shape == (200, 200)
