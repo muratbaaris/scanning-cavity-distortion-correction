@@ -88,3 +88,53 @@ def test_fit_writes_a_loadable_calibration(tmp_path, capsys):
     assert exit_code == 0
     calibration = load_calibration(str(output))
     assert calibration.input_shape == (200, 200)
+
+def test_fit_respects_the_degree_option(tmp_path):
+    """The polynomial degree is the main knob the user has on the model, so
+    the value given on the command line must reach the stored calibration."""
+    target = tmp_path / "target.npy"
+    _write_distorted_target(target)
+    output = tmp_path / "calibration.mat"
+
+    main(["fit", str(target), "--output", str(output), "--degree", "2"])
+
+    assert load_calibration(str(output)).degree == 2
+
+
+def test_fit_reports_the_pixel_size_for_the_given_pitch(tmp_path, capsys):
+    """The printed pixel size is what converts later measurements to
+    micrometres, so the summary must state it together with the pitch the
+    user supplied."""
+    target = tmp_path / "target.npy"
+    _write_distorted_target(target)
+
+    main(["fit", str(target), "--output", str(tmp_path / "c.mat"),
+          "--target-pitch-um", "20.0"])
+
+    output = capsys.readouterr().out
+    assert "target pitch 20.0 um" in output
+
+
+def test_fit_with_a_missing_image_fails_with_status_two(tmp_path, capsys):
+    """A wrong path is the most common user mistake; it must produce the
+    documented pipeline-error status and a message on stderr, not a Python
+    traceback."""
+    exit_code = main(["fit", str(tmp_path / "nowhere.npy"),
+                      "--output", str(tmp_path / "c.mat")])
+
+    assert exit_code == 2
+    assert "error:" in capsys.readouterr().err
+
+
+def test_fit_with_a_featureless_image_fails_with_status_two(tmp_path, capsys):
+    """An image without a target cannot yield a calibration; the failure must
+    surface as an actionable error message rather than an unhandled
+    exception."""
+    blank = tmp_path / "blank.npy"
+    save_image(np.zeros((64, 64)), str(blank))
+
+    exit_code = main(["fit", str(blank),
+                      "--output", str(tmp_path / "c.mat")])
+
+    assert exit_code == 2
+    assert "error:" in capsys.readouterr().err
