@@ -92,6 +92,20 @@ python -m scdc apply sample.mat --calibration calibration.mat \
 python -m scdc demo --output-dir results
 ```
 
+`.mat` files written by acquisition software often contain several
+variables (raw scan lines, averaged images, and so on). When the file
+holds a single two-dimensional array it is selected automatically;
+otherwise `fit` and `apply` need the `--key` option to know which
+variable is the image:
+
+```bash
+python -m scdc fit target.mat --key averaged_image \
+                              --output calibration.mat --degree 3
+```
+
+If the key is omitted for such a file, the error message lists the
+available variable names to choose from.
+
 Use `python -m scdc --help` and `python -m scdc <command> --help` for the
 full list of options.
 
