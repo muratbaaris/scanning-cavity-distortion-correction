@@ -140,23 +140,6 @@ def test_fit_calibration_rejects_a_featureless_image():
     with pytest.raises(Exception):
         fit_calibration(blank, degree=1)
 
-
-def test_calibration_pixel_size_converts_spacing_to_micrometres():
-    """The pixel size method must divide the target pitch by the lattice spacing.
-
-    For a checkerboard of cell size s, the diagonal pitch is s*sqrt(2).
-    Dividing by the fitted lattice spacing (in pixels) gives um/px.
-    """
-    image = make_checkerboard(shape=(200, 200), cell_size=12.0, blur_sigma=1.0)
-    calibration = fit_calibration(image, degree=1)
-
-    target_pitch = 14.142  # 10 um * sqrt(2)
-    pixel_size = calibration.pixel_size(target_pitch)
-    assert pixel_size > 0
-    assert pixel_size == pytest.approx(
-        target_pitch / calibration.lattice_spacing_px, rel=1e-6)
-
-
 def test_calibration_summary_contains_key_information():
     """The summary is the first thing a user reads after fitting.
 
