@@ -138,3 +138,144 @@ def test_fit_with_a_featureless_image_fails_with_status_two(tmp_path, capsys):
 
     assert exit_code == 2
     assert "error:" in capsys.readouterr().err
+
+# ---------- apply ----------
+
+@pytest.fixture
+def fitted_calibration(tmp_path):
+    """A target image and a calibration fitted to it through the CLI itself,
+    shared by the ``apply`` tests."""
+    target = tmp_path / "target.npy"
+    _write_distorted_target(target)
+    calibration = tmp_path / "calibration.mat"
+    assert main(["fit", str(target), "--output", str(calibration)]) == 0
+    return target, calibration
+
+
+def test_apply_writes_the_corrected_image(fitted_calibration, tmp_path):
+    """``apply`` promises a corrected image at the requested path with the
+    output geometry recorded in the calibration."""
+    target, calibration = fitted_calibration
+    output = tmp_path / "corrected.npy"
+
+    exit_code = main(["apply", str(target),
+                      "--calibration", str(calibration),
+                      "--output", str(output)])
+
+    assert exit_code == 0
+    corrected = load_image(str(output))
+    expected_shape = tuple(load_calibration(str(calibration)).output_shape)
+    assert corrected.shape == expected_shape
+
+
+def test_apply_straightens_the_lattice(fitted_calibration, tmp_path):
+    """Correcting the very image the calibration was fitted on must restore
+    the 90 degree lattice angle; this verifies the CLI wires the pipeline
+    together correctly, not merely that files appear."""
+    target, calibration = fitted_calibration
+    output = tmp_path / "corrected.npy"
+
+    main(["apply", str(target), "--calibration", str(calibration),
+          "--output", str(output)])
+
+    corrected = load_image(str(output))
+    angle = lattice_angle(*estimate_basis(detect_centroids(corrected)))
+    assert abs(angle - 90.0) < 0.5
+
+
+def test_apply_forwards_the_fill_value(fitted_calibration, tmp_path):
+    """Pixels without data must receive the value chosen on the command
+    line, because a silently different value would bias any later statistics
+    on the corrected image.  The output crop removes the empty corners, so a
+    region of missing data is created inside the image instead by punching a
+    NaN hole into the input."""
+    target, calibration = fitted_calibration
+    holed = np.array(load_image(str(target)))
+    holed[90:110, 90:110] = np.nan
+    holed_path = tmp_path / "holed.npy"
+    save_image(holed, str(holed_path))
+    output = tmp_path / "corrected.npy"
+
+    main(["apply", str(holed_path), "--calibration", str(calibration),
+          "--output", str(output), "--fill", "-1.0"])
+
+    corrected = load_image(str(output))
+    assert np.any(corrected == -1.0) and not np.any(np.isnan(corrected))
+
+
+def test_apply_with_a_missing_calibration_fails_with_status_two(
+        tmp_path, capsys):
+    """Pointing ``apply`` at a calibration that does not exist must fail
+    with the documented status and an explanatory message."""
+    target = tmp_path / "target.npy"
+    _write_distorted_target(target)
+
+    exit_code = main(["apply", str(target),
+                      "--calibration", str(tmp_path / "nowhere.mat"),
+                      "--output", str(tmp_path / "out.npy")])
+
+    assert exit_code == 2
+    assert "error:" in capsys.readouterr().err
+
+
+def test_apply_with_a_wrong_shaped_image_fails_with_status_two(
+        fitted_calibration, tmp_path, capsys):
+    """A calibration is only valid for the scan geometry it was measured on,
+    so applying it to an image of a different shape must be refused."""
+    _, calibration = fitted_calibration
+    wrong = tmp_path / "wrong.npy"
+    save_image(np.zeros((50, 60)), str(wrong))
+
+    exit_code = main(["apply", str(wrong),
+                      "--calibration", str(calibration),
+                      "--output", str(tmp_path / "out.npy")])
+
+    assert exit_code == 2
+    assert "error:" in capsys.readouterr().err
+
+
+# ---------- demo ----------
+
+def test_demo_writes_the_three_promised_files(tmp_path):
+    """The README tells the user which files the demo produces; all three
+    must exist afterwards, in the directory the user asked for."""
+    exit_code = main(["demo", "--output-dir", str(tmp_path)])
+
+    assert exit_code == 0
+    for name in ("distorted.npy", "corrected.npy", "calibration.mat"):
+        assert (tmp_path / name).is_file()
+
+
+def test_demo_creates_a_missing_output_directory(tmp_path):
+    """The demo is the very first command a new user runs, so it should
+    create the output directory rather than fail on a fresh checkout."""
+    output_dir = tmp_path / "not" / "yet" / "there"
+
+    exit_code = main(["demo", "--output-dir", str(output_dir)])
+
+    assert exit_code == 0
+    assert (output_dir / "corrected.npy").is_file()
+
+
+def test_demo_reports_a_corrected_lattice_angle(tmp_path, capsys):
+    """The before/after table is the evidence the demo offers that the
+    installation works; the corrected image it writes must indeed have a
+    near-right lattice angle."""
+    main(["demo", "--output-dir", str(tmp_path)])
+
+    corrected = load_image(str(tmp_path / "corrected.npy"))
+    angle = lattice_angle(*estimate_basis(detect_centroids(corrected)))
+    assert abs(angle - 90.0) < 0.5
+
+
+def test_demo_is_deterministic_for_a_fixed_seed(tmp_path):
+    """Replicability is a core promise of the package: two runs with the same
+    seed must produce bit-identical corrected images."""
+    first, second = tmp_path / "first", tmp_path / "second"
+
+    main(["demo", "--output-dir", str(first), "--seed", "7"])
+    main(["demo", "--output-dir", str(second), "--seed", "7"])
+
+    np.testing.assert_array_equal(
+        load_image(str(first / "corrected.npy")),
+        load_image(str(second / "corrected.npy")))
