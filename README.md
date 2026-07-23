@@ -28,7 +28,7 @@ Requires Python 3.9 or later.
 ```bash
 git clone https://github.com/muratbaaris/scanning-cavity-distortion-correction.git
 cd scanning-cavity-distortion-correction
-pip install -r requirements.txt
+pip install -e .
 ```
 
 The GUI additionally requires Tkinter, which is included with most Python
