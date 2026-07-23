@@ -115,20 +115,30 @@ def test_apply_calibration_rejects_a_wrong_input_shape():
 
 
 def test_apply_calibration_fills_missing_data_with_the_requested_value():
-    """Pixels outside the warped region should carry the fill value.
-
-    The default is NaN (so downstream code notices them), but for display
-    or for routines that cannot handle NaN the user can request zero.
+    """Pixels without source data must carry exactly the requested value.
+ 
+    The output is cropped to the largest rectangle of valid pixels, so on a
+    clean image no missing data survives and the fill value is unobservable;
+    an earlier version of this test asserted on such an output and could not
+    fail.  A hole of NaN punched into the interior of the input survives the
+    crop, which makes the fill behaviour observable: the hole must come out
+    as NaN when NaN is requested and as zero when zero is requested, in the
+    same output positions.
     """
     image = make_checkerboard(shape=(160, 160), cell_size=12.0, blur_sigma=1.0)
     distorted = distort_image(image, matrix=shear_matrix(shear=0.3))
     calibration = fit_calibration(distorted, degree=2)
-
-    with_nan = apply_calibration(distorted, calibration, fill_value=np.nan)
-    with_zero = apply_calibration(distorted, calibration, fill_value=0.0)
-
+ 
+    holed = distorted.copy()
+    holed[70:90, 70:90] = np.nan
+ 
+    with_nan = apply_calibration(holed, calibration, fill_value=np.nan)
+    with_zero = apply_calibration(holed, calibration, fill_value=0.0)
+ 
+    missing = np.isnan(with_nan)
+    assert missing.any(), "the hole must survive the crop for this test"
     assert not np.any(np.isnan(with_zero))
-
+    np.testing.assert_allclose(with_zero[missing], 0.0)
 
 def test_fit_calibration_rejects_a_featureless_image():
     """An image with no recognisable target cannot be calibrated.
